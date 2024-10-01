@@ -9,14 +9,14 @@ df = pd.read_csv("fcc-forum-pageviews.csv", index_col="date")
 
 # Clean data
 # Clean data by removing anything smaller than 2.5% quantile or greater than 97.5% quantile
-df = df[(df["value"] > df["value"].quantile(0.025)) & (df["value"] < df["value"].quantile(0.975))]
+df = df[(df["value"] >= df["value"].quantile(0.025)) & (df["value"] <= df["value"].quantile(0.975))]
 df.index = pd.to_datetime(df.index) #  Change index to datetime format
 
 
 def draw_line_plot():
     # Draw line plot
     fig, ax= plt.subplots(figsize=(15,5))
-    fig.suptitle("Daily freeCodeCamp Forum Page Views 5/2016-12/2019")
+    ax.title.set_text("Daily freeCodeCamp Forum Page Views 5/2016-12/2019")
     ax.set_xlabel("Date")
     ax.set_ylabel("Page Views")
     ax.locator_params(axis="x", nbins=5, tight=True)
@@ -30,13 +30,13 @@ def draw_bar_plot():
     # Copy and modify data for monthly bar plot
     df_bar = df.resample("M").mean()
     df_bar["Months"] = df_bar.index.strftime("%B")
-    df_bar["year"] = df_bar.index.year.astype(int)
+    df_bar["Years"] = df_bar.index.year.astype(int)
     df_bar = df_bar.rename(columns={"value":"Average Page Views"})
     df_bar.index = df_bar.index.strftime("%Y-%m")
 
     # Insert missing data in 2016, the first four months
     missing_data = {
-        "year": [2016, 2016, 2016, 2016],
+        "Years": [2016, 2016, 2016, 2016],
         "Months": ['January', 'February', 'March', 'April'],
         "Average Page Views": [0, 0, 0, 0]
     }
@@ -46,10 +46,12 @@ def draw_bar_plot():
     # Draw bar plot
     fig, ax = plt.subplots(figsize=(7,7))
     ax = sns.barplot(data=df_bar, 
-                     x="year", 
-                     y="Average Page Views", 
-                     hue="Months", 
-                     palette="tab10")
+                    x="Years", 
+                    y="Average Page Views", 
+                    hue="Months", 
+                    palette="tab10",
+                    hue_order=["January","February","March","April","May","June","July","August","September","October","November","December"],
+                    width=0.5)
     plt.tight_layout()
 
 
@@ -84,17 +86,22 @@ def draw_box_plot():
     ax[1].title.set_text("Month-wise Box Plot (Seasonality)")
     ax[1].set_xlabel("Month")
     ax[1].set_ylabel("Page Views")
-    sns.boxplot(df_box, x="month", 
+    sns.boxplot(df_box, 
+                x="month", 
                 y="value", 
                 ax=ax[1], 
                 hue="month", 
-                order=["Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 
+                order=["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 
                 palette="Set2", 
                 fliersize=1)
 
     for ax in ax:
         ax.set_ylim([0,200000])
         ax.locator_params(axis="y", nbins=10, tight=True)
+
+
+
+
 
     # Save image and return fig (don't change this part)
     fig.savefig('box_plot.png')
